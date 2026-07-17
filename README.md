@@ -1,6 +1,6 @@
-# {{PROJECT_NAME}}
+# ai
 
-> {{PROJECT_DESCRIPTION}}
+> AI agents, prompts, orchestration and machine learning components.
 
 ---
 
