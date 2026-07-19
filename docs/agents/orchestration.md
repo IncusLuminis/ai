@@ -59,10 +59,10 @@ Who is allowed to move a card between which statuses:
 |---|---|---|
 | Backlog | `Product_Owner` | Created from spec decomposition |
 | Ready | `Product_Owner` | Acceptance criteria + Size/Estimate set (Definition of Ready met) |
-| In Progress | `Coder` or `DevOps` | Whoever claims the work; Start date set |
-| In Review | `Coder` (on opening PR) | Handed to `Validator` |
+| In Progress | `Coder`, `DevOps`, `Media_keeper`, or `Publisher` | Whoever claims the work; Start date set. `Media_keeper`/`Publisher` claim their own standalone cards directly (scheduled audits, recurring publishing) — this doesn't require a `Coder` PR to exist first. |
+| In Review | `Coder` (on opening PR) | Handed to `Validator`. PR-based work only — see the Done row for the non-PR path. |
 | Blocked | any role | Must leave a comment explaining the blocker; `Product_Owner` triages |
-| Done | `Product_Owner` | Only after `Validator` approval + human merge + (if applicable) `Media_keeper`/`Publisher` confirmation |
+| Done | `Product_Owner` | **PR-based work** (most `Coder` Stories): only after `Validator` approval + human merge + (if applicable) `Media_keeper`/`Publisher` confirmation. **Non-PR work** (infra-only `DevOps` Tasks per `devops.md`, standalone `Media_keeper`/`Publisher` cards): no `Validator`/merge step exists to gate on — `Product_Owner` closes once the executing role reports the work done and any output (e.g. a report, a published post) is verifiable. |
 
 ## 3. RACI
 

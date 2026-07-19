@@ -1,15 +1,15 @@
 # IncusLuminis Agent Team
 
-**Status:** Charters designed, executable definitions built, key operating decisions resolved, not yet connected/piloted
+**Status:** Connected and running — GitHub MCP live, Project 2 fields configured, all four Agent roles verified running concurrently on real (read-only) work. Formal pilot (`Product_Owner` → `Coder` → `Validator` on a Project 1 Story) not started yet.
 **Owner:** Product_Owner role (until a human owner is assigned)
-**Version:** 0.3 — 2026-07-19
-**Branch:** `feature/agent-team-design`
+**Version:** 0.4 — 2026-07-19
+**Branch:** `feature/agent-team-design`, reviewed and merged into `main` by Mihal
 
 ## 1. Purpose
 
 IncusLuminis runs a portfolio of independent repositories (products, shared libraries, platform standards, tooling, content, media) under one organization. This folder designs *and now hosts* a standing team of six specialized agents to help run that portfolio day to day: turning specs into tracked work, writing and validating code, keeping infrastructure healthy, and getting finished content and media out the door.
 
-`shared/ai` is the team's home: executable agent/skill definitions live in `.claude/` at this repo's root; this `docs/agents/` folder is the design and reference material behind them. See `setup.md` for how to actually run any of it. See `implementation-roadmap.md` for what's still not done — no GitHub MCP connection has been made yet, no board has been configured, and nothing has been piloted.
+`shared/ai` is the team's home: executable agent/skill definitions live in `.claude/` at this repo's root; this `docs/agents/` folder is the design and reference material behind them. See `setup.md` for how to actually run any of it. See `implementation-roadmap.md` for current status and what's still not done.
 
 ## 2. Roster
 
@@ -45,7 +45,7 @@ Per the request that started this work, the agent team gets **its own operationa
 
 Confirmed 2026-07-19: **Project 1** ([`IncusLuminis/projects/1`](https://github.com/orgs/IncusLuminis/projects/1)) is the first real project the agents will actually work on — that's where the pilot runs, once setup is done. Current focus is finishing that setup, not piloting yet (see `implementation-roadmap.md §1`).
 
-GitHub access for all six roles runs through the GitHub MCP server, registered locally via `scripts/setup-github-mcp.sh` (see `setup.md`) — not yet actually run against a real token as of this commit. Until it has been, any agent needing GitHub write access falls back to `gh` CLI, matching the existing product-owner skill's documented fallback.
+GitHub access for all six roles runs through the GitHub MCP server, registered locally via `scripts/setup-github-mcp.sh` — connected and verified on Mihal's machine (`claude mcp list` shows `github: ... ✔ Connected`). `gh` CLI remains the documented fallback for anything the MCP tools don't cover.
 
 ## 6. Open questions
 

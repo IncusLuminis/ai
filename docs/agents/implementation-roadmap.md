@@ -14,6 +14,7 @@
 - **2026-07-19** — **Project 1 vs Project 2 confirmed.** Project 2 is for developing the agent team itself. The agents obviously work on other, real projects too — **Project 1** (`IncusLuminis/projects/1`) is the first of those, and is where the pilot (step 5 below) will actually run. Current focus, per direct instruction: finish infrastructure/CLI setup before piloting — not start piloting yet.
 - **2026-07-19** — **secrets hygiene tightened.** Raised by Mihal after seeing the raw PAT sitting in `.env`: gitignored is not the same as safe from an agent with `Read` access to the whole repo. Response: `.env` deleted once `setup-github-mcp.sh` had run (the live credential lives in `~/.claude.json`, outside the repo, not in `.env`); added `.claude/settings.json` with `permissions.deny` rules blocking `Read`/`Bash(cat ...)` on `.env` and `.mcp.json` as defense in depth — explicitly documented as imperfect (known Anthropic issue with `Read` deny not always covering `.env`; `Bash` deny only matches the literal command pattern listed, not every way to read a file). Real protection is "the secret isn't sitting in a file agents can read," not the deny rule.
 - **2026-07-19** — **approved for merge to `main`.** Mihal reviewed this session's work and gave explicit sign-off to merge `feature/agent-team-design` (this repo) and `chore/point-product-owner-skill-to-shared-ai` (`platform/standards`) into their respective `main` branches — this is the human-approval step `orchestration.md §4` requires; nothing here was merged unsupervised. The actual push/merge has to run on Mihal's machine, not from the sandbox that authored these docs (no `origin` write access here) — see the commands given in chat.
+- **2026-07-19** — **first real concurrency test, post-merge.** Mihal ran `claude` from `shared/ai` and dispatched `Coder`, `Validator`, `DevOps`, and `Media_keeper` in parallel via the Task tool on independent, read-only audits. All four completed and wrote reports to `sandbox/reports/`. `Validator` found 6 internal doc inconsistencies (stale skill/agent mapping, a stale `product-owner.md` reference, two status-flow gaps for non-PR work, an uncited claim, a stale README header) — all fixed in this pass. `Coder`, `DevOps`, and `Media_keeper` surfaced real portfolio findings (13/14 repos have zero CI; `tools` repo has a version mismatch and committed cruft; `shared/assets` is 928 MB locally with some duplicate files but correctly keeps binaries out of git) — not yet turned into backlog items; see the reports and the next roadmap step.
 
 ## 1. Sequenced next steps
 
@@ -21,17 +22,18 @@
 2. ~~Check prerequisites, then configure Project 2 on GitHub~~ — done: `check-prereqs.sh`, `setup-github-mcp.sh`, `setup-project-2-fields.sh` all run successfully on Mihal's machine (2026-07-19). Remaining: 3 manual UI steps the last script printed (Status option values, Priority/Start date/Target date as columns, confirm default repo `IncusLuminis/ai`).
 3. ~~Install Claude Code CLI on the local machine~~ — done, including working around an `nvm`-vs-Homebrew-Node install issue (`setup.md §6`).
 4. ~~Run the three setup scripts~~ — done, see above.
-5. **Pilot on a real Story from Project 1**, once the 3 manual UI steps above are done — run `Product_Owner` → `Coder` → `Validator` end to end against an actual product Story, not a synthetic task. No gate on the other three roles; use them as soon as there's a real Task/asset/publish need, pilot or not.
-6. **Revisit hook enforcement** after the pilot, per the deferred decision above.
-7. **Tighten `tools:` allowlists** on each agent definition based on what actually gets used — the ones shipped so far are reasonable starting points, not a security review.
-8. **Wire up local automation** once there's a reason to: local cron/`launchd` jobs on Mihal's machine for `Product_Owner` reporting, `Media_keeper` audits, etc. — not GitHub Actions, which would count as "another runner."
-9. **Specify Publisher/Media_keeper external integrations one at a time**, as each becomes the actual bottleneck — e.g. Cloudflare R2 credentials the first time `Media_keeper` needs to push somewhere real, a CMS/social connector the first time `Publisher` needs to post somewhere real.
-10. **Define a reporting cadence** for `Product_Owner` once there's enough board activity on Project 2 to report on.
+5. **Turn the 2026-07-19 audit findings into real Stories/Tasks**, using `Product_Owner` — candidates already surfaced organically by the concurrency test rather than invented for the purpose: `DevOps`'s finding that 13/14 repos have zero CI, `Coder`'s findings in `tools` (version mismatch, committed `.DS_Store`/`__pycache__`, empty `LICENSE`), `Media_keeper`'s duplicate-file findings in `shared/assets`. See `sandbox/reports/`.
+6. **Pilot on one of those real Stories from Project 1**, once the 3 manual UI steps above are done — run `Product_Owner` → `Coder` → `Validator` end to end. No gate on the other three roles; use them as soon as there's a real Task/asset/publish need, pilot or not.
+7. **Revisit hook enforcement** after the pilot, per the deferred decision above.
+8. **Tighten `tools:` allowlists** on each agent definition based on what actually gets used — the ones shipped so far are reasonable starting points, not a security review.
+9. **Wire up local automation** once there's a reason to: local cron/`launchd` jobs on Mihal's machine for `Product_Owner` reporting, `Media_keeper` audits, etc. — not GitHub Actions, which would count as "another runner."
+10. **Specify Publisher/Media_keeper external integrations one at a time**, as each becomes the actual bottleneck — e.g. Cloudflare R2 credentials the first time `Media_keeper` needs to push somewhere real, a CMS/social connector the first time `Publisher` needs to post somewhere real.
+11. **Define a reporting cadence** for `Product_Owner` once there's enough board activity on Project 2 to report on.
 
 ## 2. Open questions still not decided
 
 - **Cross-linking the v1.0 contract to the Project 2 contract**: `platform/standards/docs/process/github-project-management-contract.md`'s Owner line now points at `shared/ai`, but nothing in it yet mentions Project 2 exists. Small remaining edit, not done yet.
-- **Which Project 1 Story to pilot on**: step 5 needs a specific, actual Story picked once setup is done — not chosen yet.
+- **Which Project 1 Story to pilot on**: no longer a blank slate — step 5's audit findings (no-CI gap, `tools` repo cleanup, asset dedup) are real candidates. Still need `Product_Owner` to actually write them up and one to get picked.
 
 ## 3. What's been built so far (2026-07-19, second session)
 

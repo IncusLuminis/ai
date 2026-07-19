@@ -27,6 +27,14 @@ None of this makes Cowork wrong for the *design* work (like this document) — i
 
 Skill vs Agent per role isn't a hard rule — it's "does this need its own isolated context and tool surface, or is it a process that runs inside whoever invoked it." `Coder`, `Validator`, `DevOps`, `Media_keeper` all touch the filesystem/shell in ways worth isolating, so this build gave all four an Agent definition; `Product_Owner` and `Publisher` stay Skills since neither needs its own branch/worktree.
 
+### Running multiple agents at once
+
+Verified in practice 2026-07-19 (Mihal ran `Coder`/`Validator`/`DevOps`/`Media_keeper` concurrently on independent read-only audits — see `sandbox/reports/`). There are three distinct ways to get concurrency, at different levels of isolation:
+
+1. **Task-tool dispatch within one session** — what was actually used. One `claude` session (one process, one conversation) fans out to multiple of the four Agent-type roles via its Task tool; each gets its own context, but all are children of the same parent session and report back into it. Good for a single orchestrator collecting results from independent, non-conflicting work — as in the audit above, all four were read-only, so there was no risk of two agents fighting over the same files.
+2. **Separate terminal windows, each running its own `claude`** — full OS-level process isolation, own context each, but coordinated by hand (you decide what runs where).
+3. **`claude --worktree` (`-w`), native since Claude Code v2.1.49 (Feb 2026)** — the right mechanism once agents are actually *writing*, not just reading. Creates a dedicated git worktree (`.claude/worktrees/<n>/`) on its own branch and starts a session inside it, so two `Coder` sessions can implement two different Stories in the same repo at the same time with zero file/branch collision. This is what "worktree-isolated" in the `Coder` row above should concretely mean once multiple Stories are in flight — option 1 is fine for read-only fan-out, but real parallel *writes* to the same repo want separate worktrees, not separate Task-tool branches within one session.
+
 ## 3. Where everything actually lives
 
 Resolved 2026-07-19: **everything lives in `shared/ai`**, not split across `platform/standards` and `shared/ai`, and not packaged as a separate installable plugin for now:
@@ -41,9 +49,7 @@ shared/ai/
 │   │   └── media-keeper.md
 │   └── skills/
 │       ├── product-owner/
-│       ├── devops/
-│       ├── publisher/
-│       └── media-keeper/
+│       └── publisher/
 ├── scripts/
 │   └── setup-github-mcp.sh
 ├── .env.example                   (copy to .env, fill in a real PAT — never commit .env)

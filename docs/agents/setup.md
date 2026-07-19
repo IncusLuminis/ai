@@ -62,7 +62,7 @@ Launching from `shared/ai` is what makes its `.claude/agents/` and `.claude/skil
 ## 4. Try each role
 
 - **Product_Owner**: ask it to decompose a spec onto Project 2 (agent-team work) or Project 1 (product work).
-- **Coder**: point it at a specific `Ready` Story and the target repo — Project 1's default repo is `visualization-studio-tools`, but a Story can name any repo in the portfolio.
+- **Coder**: point it at a specific `Ready` Story and the target repo — Project 1's default repo is `visualization-studio-tools` (per the v1.0 contract, `platform/standards/docs/process/github-project-management-contract.md §4`), but a Story can name any repo in the portfolio.
 - **Validator**: point it at an open PR.
 - **DevOps** / **Media_keeper**: point at an infra Task or an asset job respectively — built and idle until there's real demand, per the rollout decision in `implementation-roadmap.md §0`.
 - **Publisher**: point at approved content ready to go out.

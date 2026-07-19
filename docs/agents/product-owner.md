@@ -26,8 +26,8 @@ GitHub Issues (Epics/Stories) on the correct project board, correctly typed and 
 
 ## Tools & access required
 
-- The existing `product-owner` skill (`platform/standards/skills/product-owner/`), used as-is for Project 1.
-- GitHub MCP (issues + projects) once connected; `gh` CLI as fallback.
+- The `product-owner` skill at `.claude/skills/product-owner/` in this repo — canonical since 2026-07-19, covers both Project 1 and Project 2. (The original copy at `platform/standards/skills/product-owner/` is superseded, kept only as a redirect.)
+- GitHub MCP (issues + projects), registered via `scripts/setup-github-mcp.sh`; `gh` CLI as fallback.
 - Read access across all repos to understand what's already built (does not need write/commit access to code).
 
 ## Explicit boundaries — does NOT
