@@ -52,4 +52,4 @@ If asked to groom an existing backlog, check each Story against the applicable c
 
 ## Relationship to the platform/standards copy
 
-`platform/standards/skills/product-owner/` holds an earlier, Project-1-only version of this skill. This copy supersedes it for anything Project-2-aware; whether the platform/standards copy should be deprecated or kept as a Project-1-only variant is an open question (see `../../../docs/agents/implementation-roadmap.md`), not resolved here.
+Resolved 2026-07-19: this copy is canonical. `platform/standards/skills/product-owner/SKILL.md` has been replaced with a short redirect pointing back here (on branch `chore/point-product-owner-skill-to-shared-ai` in that repo); it's kept only so old references don't break, and isn't updated going forward.

@@ -70,4 +70,5 @@ The original draft of this section assumed GitHub Actions or a dedicated runner 
 - **Per-agent `tools:` allowlists**: the definitions added in this pass are reasonable starting points, not a completed least-privilege review.
 - **GitHub MCP token scope**: a Personal Access Token is required (see `setup.md`); exact scopes needed depend on which GitHub MCP tools `Product_Owner`/`Coder` end up using.
 - **Local polling vs. manual dispatch for `Validator`**: not built in this pass — noted above as the realistic option given no runner, but the mechanism itself isn't implemented.
-- **Human approver of record** and **rollout order past the pilot**: still open, see `implementation-roadmap.md §2`.
+
+Resolved since the first draft of this section: human approver of record (Mihal, sole, every repo) and rollout order (no gate — `DevOps`/`Publisher`/`Media_keeper` are built and idle, used on demand rather than after a pilot milestone). See `implementation-roadmap.md §0`.

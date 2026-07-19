@@ -1,8 +1,8 @@
 # IncusLuminis Agent Team
 
-**Status:** Charters designed, executable definitions built, not yet connected/piloted
+**Status:** Charters designed, executable definitions built, key operating decisions resolved, not yet connected/piloted
 **Owner:** Product_Owner role (until a human owner is assigned)
-**Version:** 0.2 — 2026-07-19
+**Version:** 0.3 — 2026-07-19
 **Branch:** `feature/agent-team-design`
 
 ## 1. Purpose
@@ -34,9 +34,9 @@ See [execution-model.md](./execution-model.md) for how the six roles run in prac
 
 This design does not invent process from scratch — it extends conventions already active in the org:
 
-- `platform/standards/docs/process/github-project-management-contract.md` (v1.0) — the existing contract for **Project 1** (`IncusLuminis/projects/1`), the product Epic/Story board. That contract is unchanged by this work.
-- `platform/standards/skills/product-owner/` — the existing Product Owner skill, which this design's `Product_Owner` role adopts as-is for Project 1 work, and extends for Project 2 (see below).
-- Per-repo agent rules such as `products/nebulacast/nebulacast-app/Claude.md` (own working branch, no direct commits to `main`, PR + explicit human approval to merge) — this design proposes generalizing that pattern org-wide (flagged as an open decision, not yet made).
+- `platform/standards/docs/process/github-project-management-contract.md` (v1.0) — the existing contract for **Project 1** (`IncusLuminis/projects/1`), the product Epic/Story board. Its content is unchanged; only its Owner line now points at `shared/ai` (see below).
+- `platform/standards/skills/product-owner/` — the original Product Owner skill. **Superseded 2026-07-19**: replaced with a redirect to `.claude/skills/product-owner/` in this repo, which covers Project 1 and Project 2 both.
+- Per-repo agent rules such as `products/nebulacast/nebulacast-app/Claude.md` (own working branch, no direct commits to `main`, PR + explicit human approval to merge) — this design proposes generalizing that pattern org-wide (flagged as an open decision, not yet made). Merge/publish approval itself is resolved: Mihal is the sole approver, across every repo.
 - `docs/docs/architecture/migration-target-model.md` — the target repo layout and the code/content/media separation principle that `Media_keeper` and `DevOps` boundaries are built around.
 
 ## 5. New in this design: Project 2
