@@ -29,7 +29,7 @@ Identical to v1.0 §2–3 (Epic → Story via Issue Type + native Sub-issues; St
 
 ## 4. Default repo
 
-**Proposed:** `IncusLuminis/ai` (`shared/ai`), since that's the repo housing the agent team's own design and (eventually) skill definitions. This is a recommendation, not a decision — flagged in `implementation-roadmap.md`.
+**Resolved (2026-07-19): `IncusLuminis/ai` (`shared/ai`).** This is also where the agent team's executable definitions live (`.claude/agents/`, `.claude/skills/` — see `../agents/execution-model.md §3`), so the repo housing Project 2's default issues and the repo housing the agents that work them are the same one.
 
 ## 5. Epic and Story templates
 
@@ -37,7 +37,7 @@ Same templates as v1.0 §5–6, with one substitution: the Epic's `## Source` li
 
 ## 6. Access
 
-GitHub MCP is the intended access mechanism for `Product_Owner` (and any other role that needs to create/move cards). It is **not connected in this workspace as of this document's writing** — no matching connector was found via the MCP registry search performed during this design pass. Until connected, fall back to `gh` CLI, matching the existing product-owner skill's documented fallback for browser/API-less environments.
+GitHub MCP is the access mechanism for `Product_Owner` (and any other role that needs to create/move cards), run locally on Mihal's machine via `scripts/setup-github-mcp.sh` (see `../agents/setup.md`) — not through Cowork's connector registry, which had no matching connector at design time. Until the script has actually been run with a real Personal Access Token, fall back to `gh` CLI, matching the existing product-owner skill's documented fallback for browser/API-less environments.
 
 ## 7. Non-goals
 

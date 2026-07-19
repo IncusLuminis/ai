@@ -24,8 +24,10 @@ dist/
 # Secrets
 .env
 .env.*
+!.env.example
 *.pem
 *.key
+.mcp.json
 
 # Temporary
 tmp/

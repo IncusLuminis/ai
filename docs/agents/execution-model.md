@@ -1,7 +1,7 @@
 # Execution Model: Claude Code CLI
 
-**Status:** Draft / Proposed
-**Decision (2026-07-19):** the agent team runs via **Claude Code CLI**, not only as ad hoc Cowork chat sessions. This document maps the six roles onto CLI primitives and says what that unlocks and what it still requires.
+**Status:** Decided, partially built
+**Decision (2026-07-19):** the agent team runs via **Claude Code CLI**, not only as ad hoc Cowork chat sessions, entirely from **`shared/ai`** on **Mihal's local machine** (no other runner). This document maps the six roles onto CLI primitives, says what that unlocks, and how a session rooted in `shared/ai` reaches the rest of the portfolio.
 
 ## 1. Why CLI, not just chat
 
@@ -18,50 +18,56 @@ None of this makes Cowork wrong for the *design* work (like this document) — i
 
 | Role | Primitive | Why | Typical trigger |
 |---|---|---|---|
-| `Product_Owner` | Skill — `.claude/skills/product-owner` (already exists in `platform/standards`), extended for Project 2 | Process/knowledge, not isolated execution; runs inside whichever session needs it | Interactive session, or `claude -p` for scheduled reporting |
-| `Coder` | Agent — `.claude/agents/coder.md`, worktree-isolated | Needs its own branch/worktree, shouldn't pollute the invoking session's context, output is a PR | Dispatched per-Story (script reads `Ready` cards off the board, invokes the agent per Story) |
-| `Validator` | Agent — `.claude/agents/validator.md` | Independent judgment; must not share Coder's context/bias; read-mostly tools | GitHub Actions on `pull_request` events, headless |
-| `DevOps` | Skill for routine runbooks + Agent for larger isolated infra changes | Most DevOps work is "follow the runbook" inside an existing session; big changes warrant isolation | Cron health checks, CI-failure webhook, explicit Task issue |
-| `Publisher` | Skill — orchestrates the existing `docx`/`pdf`/`pptx`/`schedule` skills | No isolation benefit; it's composing other skills | `schedule` skill's own cron, or dispatch on Story `Done` |
-| `Media_keeper` | Skill for lifecycle standards + Agent for batch processing jobs | Day-to-day rules are a runbook; bulk re-encoding/dedup jobs benefit from isolation | Handoff from Coder/Publisher, or scheduled audits |
+| `Product_Owner` | Skill — `.claude/skills/product-owner`, adapted here to cover both Project 1 and Project 2 | Process/knowledge, not isolated execution; runs inside whichever session needs it | Interactive session, or `claude -p` for scheduled reporting |
+| `Coder` | Agent — `.claude/agents/coder.md`, worktree-isolated | Needs its own branch/worktree, shouldn't pollute the invoking session's context, output is a PR | Dispatched per-Story: Mihal (or `Product_Owner`) tells the session which Story to pick up |
+| `Validator` | Agent — `.claude/agents/validator.md` | Independent judgment; must not share Coder's context/bias; read-mostly tools | Invoked on a PR once opened — manually, or by a local script polling for new PRs (see §4) |
+| `DevOps` | Agent — `.claude/agents/devops.md`, for routine runbooks and larger isolated infra changes alike | Kept as a single agent rather than split skill/agent — see §3 note | Explicit dispatch, or local cron health checks |
+| `Publisher` | Skill — `.claude/skills/publisher`, orchestrates the existing `docx`/`pdf`/`pptx`/`schedule` skills | No isolation benefit; it's composing other skills | `schedule` skill's own cron, or dispatch on Story `Done` |
+| `Media_keeper` | Agent — `.claude/agents/media-keeper.md`, covers both day-to-day lifecycle rules and batch jobs | Kept as a single agent — see §3 note | Handoff from Coder/Publisher, or scheduled audits |
 
-Skill vs Agent per role isn't a hard rule — it's "does this need its own isolated context and tool surface, or is it a process that runs inside whoever invoked it." Several roles are both, depending on the task's size.
+Skill vs Agent per role isn't a hard rule — it's "does this need its own isolated context and tool surface, or is it a process that runs inside whoever invoked it." `Coder`, `Validator`, `DevOps`, `Media_keeper` all touch the filesystem/shell in ways worth isolating, so this build gave all four an Agent definition; `Product_Owner` and `Publisher` stay Skills since neither needs its own branch/worktree.
 
-## 3. Packaging: one internal plugin
+## 3. Where everything actually lives
 
-Recommendation: package all six roles as a single Claude Code **plugin** rather than loose per-repo `.claude/` folders, so there's one source of truth instead of six things drifting independently:
+Resolved 2026-07-19: **everything lives in `shared/ai`**, not split across `platform/standards` and `shared/ai`, and not packaged as a separate installable plugin for now:
 
 ```text
-incusluminis-agent-team/           (proposed plugin name, not final)
-├── skills/
-│   ├── product-owner/             (already exists — moved/synced in, not rewritten)
-│   ├── devops/
-│   ├── publisher/
-│   └── media-keeper/
-├── agents/
-│   ├── coder.md
-│   ├── validator.md
-│   ├── devops.md                  (heavier, isolated-infra variant)
-│   └── media-keeper.md            (batch-processing variant)
-├── hooks/
-│   └── enforce-branch-policy.*    (blocks direct commits to main, per orchestration.md §4)
-└── .mcp.json                      (GitHub MCP; later R2 / CMS / social MCPs as they exist)
+shared/ai/
+├── .claude/
+│   ├── agents/
+│   │   ├── coder.md
+│   │   ├── validator.md
+│   │   ├── devops.md
+│   │   └── media-keeper.md
+│   └── skills/
+│       ├── product-owner/
+│       ├── devops/
+│       ├── publisher/
+│       └── media-keeper/
+├── scripts/
+│   └── setup-github-mcp.sh
+├── .env.example                   (copy to .env, fill in a real PAT — never commit .env)
+├── .mcp.json                      (created by the setup script; gitignored)
+└── docs/agents/                   (this design)
 ```
 
-This directly resolves `implementation-roadmap.md`'s open question about where executable definitions should live: **`platform/standards`**, packaged as a plugin — consistent with it already being the org's home for `product-owner` and `repo-migration`, and installable into any product repo that needs the team without copy-pasting files.
+This repo *is* the agent team's home now, not just its design doc. A plugin bundle remains a reasonable future step if these definitions ever need to be installed into other orgs/repos without cloning `shared/ai`, but nothing here requires that today — since every product repo lives as a sibling directory under the same `IncusLuminis/` root, a Claude Code session rooted in `shared/ai` can already reach `../../products/*`, `../../platform/*`, etc. directly.
 
-## 4. What running on CLI unlocks operationally
+**How a session reaches other repos:** launch `claude` from inside `shared/ai` (so its `.claude/` and `.mcp.json` load), then have `Coder`/`DevOps`/`Media_keeper` operate on the target repo via relative (`../../products/nebulacast/nebulacast-app`) or absolute paths — Claude Code doesn't sandbox file/Bash access to the launch directory the way this Cowork session's sandbox does. Each target repo keeps owning its own git history and its own `Claude.md` conventions (e.g. `nebulacast-app/Claude.md`'s branch rules) — the agent honors those, `shared/ai` just supplies the agent itself.
 
-- **Headless runs** for anything that shouldn't need a human to open a chat: `claude -p "..." --output-format json`, scriptable from cron or CI.
-- **Hooks** enforcing the branch/merge policy at the tool-call level, not just as a written rule.
-- **Per-repo GitHub Actions** triggering `Validator` on PR open, `DevOps` on deploy/CI-failure events.
-- **Cron** (via the `schedule` skill or plain OS cron on wherever the CLI runs) for `Product_Owner` reporting and `Media_keeper` audits.
-- **MCP servers wired directly**, not gated by a connector registry — closes the GitHub access gap flagged in `../process/github-project-2-contract.md §6`.
+## 4. What running on CLI unlocks — revised for local-machine-only
+
+The original draft of this section assumed GitHub Actions or a dedicated runner could trigger agents. That's ruled out by the "local machine, no other runners" decision — GitHub-hosted or self-hosted Actions runners both count as "another runner." What's actually available:
+
+- **Headless runs** on Mihal's machine: `claude -p "..." --output-format json`, invoked manually or by a local script.
+- **Local cron / `launchd`** jobs (macOS) for anything that should happen on a schedule — `Product_Owner` reporting, `Media_keeper` audits. These only fire while the machine is on and awake; there's no 24/7 guarantee.
+- **No instant webhook-triggered `Validator` runs.** Without a runner, a PR being opened doesn't automatically invoke anything. The realistic pattern is either manual ("review PR #12") or a local polling script that checks for new PRs periodically while the machine is on.
+- **Hooks** (once built — deferred per the roadmap's decision log) still work locally regardless of the runner question, since they fire on tool calls within a running Claude Code session.
+- **MCP servers wired directly** via `.mcp.json`, not gated by a connector registry — see `setup.md` for the actual GitHub MCP setup.
 
 ## 5. Still open — not decided here
 
-- **Where the CLI actually runs**: Mihal's local machine, a dedicated always-on runner, or both. Affects secrets handling and whether cron/webhook triggers are even reachable.
-- **Plugin/marketplace repo**: proposing `platform/standards`; not finalized.
-- **Per-agent `tools:` allowlists**: need to be written to least-privilege before any agent gets real push/deploy/publish access — not drafted in this pass.
-- **GitHub MCP server choice** and its `.mcp.json` configuration.
-- **Service identity for automated triggers** (e.g. Validator's GitHub Action): a bot/service account vs. reusing a human token — security decision, not made here.
+- **Per-agent `tools:` allowlists**: the definitions added in this pass are reasonable starting points, not a completed least-privilege review.
+- **GitHub MCP token scope**: a Personal Access Token is required (see `setup.md`); exact scopes needed depend on which GitHub MCP tools `Product_Owner`/`Coder` end up using.
+- **Local polling vs. manual dispatch for `Validator`**: not built in this pass — noted above as the realistic option given no runner, but the mechanism itself isn't implemented.
+- **Human approver of record** and **rollout order past the pilot**: still open, see `implementation-roadmap.md §2`.
