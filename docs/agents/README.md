@@ -28,6 +28,8 @@ Each role file follows the same shape: mission, responsibilities, inputs/outputs
 
 See [orchestration.md](./orchestration.md) for the end-to-end workflow, the status-flow across the GitHub Project board, and a RACI table across all six roles.
 
+See [execution-model.md](./execution-model.md) for how the six roles run in practice: the team runs via **Claude Code CLI** (decided 2026-07-19), not just Cowork chat — this doc maps each role to a Skill or an Agent, and lays out the proposed `incusluminis-agent-team` plugin packaging.
+
 ## 4. Governance this design builds on
 
 This design does not invent process from scratch — it extends conventions already active in the org:
