@@ -13,11 +13,20 @@ Read-only, changes nothing. Confirms `claude`, `gh`, `git` are on `PATH`, `gh` i
 
 ## 1. Connect GitHub MCP
 
+Create a token at https://github.com/settings/personal-access-tokens/new (fine-grained):
+
+- **Resource owner:** `IncusLuminis`
+- **Repository access:** All repositories (agents can potentially touch any repo in the portfolio; narrow later if needed)
+- **Repository permissions:** Contents — Read and write; Issues — Read and write; Pull requests — Read and write; Workflows — Read and write (needed separately from Contents to touch `.github/workflows/*`); Metadata — Read-only (auto-included); Actions — Read-only (optional, for CI status)
+- **Organization permissions:** Projects — Read and write (so `Product_Owner` can manage cards on Project 1/2)
+
+If the org restricts fine-grained tokens and you land on a classic-token page instead, use scopes `repo`, `workflow`, `project`.
+
+This is a starting point, not a finished least-privilege review — narrow it once real usage shows what's actually needed (same caveat as the `tools:` allowlists in `implementation-roadmap.md`).
+
 ```bash
 cp .env.example .env
-# edit .env, set GITHUB_PAT to a real token (repo scope; add project scope
-# too if Product_Owner should manage Project fields, not just issues)
-# https://github.com/settings/personal-access-tokens/new
+# edit .env, set GITHUB_PAT to the token above
 ./scripts/setup-github-mcp.sh
 claude mcp list         # confirm "github" is there
 ```
