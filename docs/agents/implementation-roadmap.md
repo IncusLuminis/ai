@@ -16,10 +16,10 @@
 ## 1. Sequenced next steps
 
 1. ~~Review and approve this design~~ — done; the decisions above are the approval.
-2. **Check prerequisites, then configure Project 2 on GitHub**: run `scripts/check-prereqs.sh`, then `scripts/setup-github-mcp.sh`, then `scripts/setup-project-2-fields.sh` (all added this session — see `setup.md`). The field-creation script handles `Size`/`Estimate`/`Agent Role` via `gh`; Status option values and org-level Issue-field columns still need one manual pass in the Project 2 UI (the script prints exactly what's left).
-3. **Install Claude Code CLI on the local machine** (if not already) — `check-prereqs.sh` verifies this.
-4. **Run the three setup scripts above** in order (prereqs → MCP → Project 2 fields), using a PAT stored in `.env` (gitignored). See `setup.md`.
-5. **Pilot on a real Story from Project 1**, once steps 2–4 are done — run `Product_Owner` → `Coder` → `Validator` end to end against an actual product Story, not a synthetic task. No gate on the other three roles; use them as soon as there's a real Task/asset/publish need, pilot or not.
+2. ~~Check prerequisites, then configure Project 2 on GitHub~~ — done: `check-prereqs.sh`, `setup-github-mcp.sh`, `setup-project-2-fields.sh` all run successfully on Mihal's machine (2026-07-19). Remaining: 3 manual UI steps the last script printed (Status option values, Priority/Start date/Target date as columns, confirm default repo `IncusLuminis/ai`).
+3. ~~Install Claude Code CLI on the local machine~~ — done, including working around an `nvm`-vs-Homebrew-Node install issue (`setup.md §6`).
+4. ~~Run the three setup scripts~~ — done, see above.
+5. **Pilot on a real Story from Project 1**, once the 3 manual UI steps above are done — run `Product_Owner` → `Coder` → `Validator` end to end against an actual product Story, not a synthetic task. No gate on the other three roles; use them as soon as there's a real Task/asset/publish need, pilot or not.
 6. **Revisit hook enforcement** after the pilot, per the deferred decision above.
 7. **Tighten `tools:` allowlists** on each agent definition based on what actually gets used — the ones shipped so far are reasonable starting points, not a security review.
 8. **Wire up local automation** once there's a reason to: local cron/`launchd` jobs on Mihal's machine for `Product_Owner` reporting, `Media_keeper` audits, etc. — not GitHub Actions, which would count as "another runner."
@@ -46,9 +46,11 @@ In `shared/ai`:
 
 Also present but unrelated: `claude mcp list` shows a second, pre-existing entry `plugin:github:github` that fails to connect — looks like a bundled Claude Code plugin distinct from what this script adds. Not investigated yet; doesn't block anything since our own `github` entry connects fine.
 
+`scripts/setup-project-2-fields.sh` has also been run: `Size` and `Estimate` already existed on the live Project 2 board (it was apparently created from a template that includes them — not something we set up), and `Agent Role` was newly created. **All scriptable infra setup is now done.** Remaining before the pilot: the three manual UI steps the script printed (Status option values, Priority/Start date/Target date as columns, confirm default repo), and picking an actual Story on Project 1 to pilot on.
+
 In `platform/standards` (separate repo, branch `chore/point-product-owner-skill-to-shared-ai`):
 
 - `skills/product-owner/SKILL.md` replaced with a redirect to `shared/ai`.
 - `docs/process/github-project-management-contract.md`'s Owner line updated to match; contract content otherwise untouched.
 
-Still not done: Project 2's `Size`/`Estimate`/`Agent Role` fields not created yet (`setup-project-2-fields.sh` not run), no hook. Nothing pushed to `origin` on either repo — both branches are local-only.
+Still not done: the 3 manual Project 2 UI steps (see above), no hook. Nothing pushed to `origin` on either repo — both branches are local-only.
