@@ -39,9 +39,11 @@ This design does not invent process from scratch — it extends conventions alre
 - Per-repo agent rules such as `products/nebulacast/nebulacast-app/Claude.md` (own working branch, no direct commits to `main`, PR + explicit human approval to merge) — this design proposes generalizing that pattern org-wide (flagged as an open decision, not yet made). Merge/publish approval itself is resolved: Mihal is the sole approver, across every repo.
 - `docs/docs/architecture/migration-target-model.md` — the target repo layout and the code/content/media separation principle that `Media_keeper` and `DevOps` boundaries are built around.
 
-## 5. New in this design: Project 2
+## 5. New in this design: Project 2, and Project 1 as the first pilot target
 
 Per the request that started this work, the agent team gets **its own operational board**: [`IncusLuminis/projects/2/views/1`](https://github.com/orgs/IncusLuminis/projects/2/views/1). This is *not* a replacement for Project 1 — product Epics/Stories continue to live there under the existing v1.0 contract. Project 2 is scoped to the agent team's own work: building out agent capabilities, cross-cutting initiatives that span multiple products, and process/tooling improvements. The contract for it is drafted in [`../process/github-project-2-contract.md`](../process/github-project-2-contract.md).
+
+Confirmed 2026-07-19: **Project 1** ([`IncusLuminis/projects/1`](https://github.com/orgs/IncusLuminis/projects/1)) is the first real project the agents will actually work on — that's where the pilot runs, once setup is done. Current focus is finishing that setup, not piloting yet (see `implementation-roadmap.md §1`).
 
 GitHub access for all six roles runs through the GitHub MCP server, registered locally via `scripts/setup-github-mcp.sh` (see `setup.md`) — not yet actually run against a real token as of this commit. Until it has been, any agent needing GitHub write access falls back to `gh` CLI, matching the existing product-owner skill's documented fallback.
 

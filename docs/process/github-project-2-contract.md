@@ -1,9 +1,9 @@
 # GitHub Project Management Contract — Project 2 (Agent Team Operations Board)
 
-**Status:** Draft / Proposed — not yet configured on the live board
+**Status:** Drafted; field-setup scripted (`scripts/setup-project-2-fields.sh`), not yet run against the live board
 **Applies to:** [`IncusLuminis/projects/2/views/1`](https://github.com/orgs/IncusLuminis/projects/2/views/1)
 **Owner:** `Product_Owner` agent role
-**Version:** 0.1 — 2026-07-19
+**Version:** 0.2 — 2026-07-19
 **Relationship to Project 1:** This contract does not replace or modify `platform/standards/docs/process/github-project-management-contract.md` (v1.0), which remains the source of truth for `IncusLuminis/projects/1` and product Epic/Story work. Project 2 is a separate board scoped to the agent team's own operational work: building out agent capability, cross-cutting process/tooling initiatives, and anything spanning multiple products that doesn't belong on a single product's backlog.
 
 ## 1. Purpose
@@ -21,11 +21,13 @@ Same mechanics as the v1.0 contract — one consistent way to structure, type, a
 
 When in doubt, `Product_Owner` should default to Project 1 — Project 2 exists for genuinely agent-team-scoped work, not as a second home for product Stories.
 
+**Project 1 is also the team's first pilot target.** Once the infrastructure/CLI setup in `../agents/setup.md` is done, the pilot (`../agents/implementation-roadmap.md §1` step 5) runs `Product_Owner` → `Coder` → `Validator` against a real Story on Project 1 — not a synthetic task invented on Project 2. Project 2 tracks the *building* of the team; Project 1 is where the team does its first real work.
+
 ## 3. Hierarchy and required fields
 
 Identical to v1.0 §2–3 (Epic → Story via Issue Type + native Sub-issues; Status/Priority/Size/Estimate/Start date/Target date/Sub-issues progress). Not repeated here to avoid drift — see the canonical text in `platform/standards`.
 
-**Proposed addition specific to Project 2:** an `Agent Role` field (single-select: `Product_Owner`, `Coder`, `Validator`, `DevOps`, `Publisher`, `Media_keeper`) so a card's owning role is visible on the board without reading the body. This does not exist on Project 1 and is not proposed there — it's specific to a board whose primary axis of organization is "which agent owns this," rather than "which product."
+**Addition specific to Project 2:** an `Agent Role` field (single-select: `Product_Owner`, `Coder`, `Validator`, `DevOps`, `Publisher`, `Media_keeper`) so a card's owning role is visible on the board without reading the body. This does not exist on Project 1 and is not proposed there — it's specific to a board whose primary axis of organization is "which agent owns this," rather than "which product." `scripts/setup-project-2-fields.sh` creates this field (plus `Size`/`Estimate`) via `gh`, idempotently — not yet run against the live board.
 
 ## 4. Default repo
 

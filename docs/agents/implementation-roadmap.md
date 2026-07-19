@@ -11,14 +11,15 @@
 - **2026-07-19** — **no phased rollout gate.** All six roles are built. `Product_Owner`, `Coder`, `Validator` are the ones with an obvious, immediate reason to be used (there's a design to pilot on). `DevOps`, `Publisher`, `Media_keeper` are equally ready but have no queued work yet — they stay idle and get invoked whenever real demand shows up, not on a schedule or a "pilot passed" gate.
 - **2026-07-19** — **Publisher/Media_keeper external tooling deliberately deferred.** CDN (R2) and CMS/social integrations will be specified one at a time, as each is actually needed, rather than designed speculatively now.
 - **2026-07-19** — **`platform/standards`'s `product-owner` skill superseded, not removed.** Replaced its `SKILL.md` with a short redirect to `shared/ai/.claude/skills/product-owner/` (done on branch `chore/point-product-owner-skill-to-shared-ai` in that repo) and updated the v1.0 contract's Owner line to match. The contract's substantive content is untouched. `references/github-project-contract.md` alongside the old skill is left in place, unused but harmless.
+- **2026-07-19** — **Project 1 vs Project 2 confirmed.** Project 2 is for developing the agent team itself. The agents obviously work on other, real projects too — **Project 1** (`IncusLuminis/projects/1`) is the first of those, and is where the pilot (step 5 below) will actually run. Current focus, per direct instruction: finish infrastructure/CLI setup before piloting — not start piloting yet.
 
 ## 1. Sequenced next steps
 
 1. ~~Review and approve this design~~ — done; the decisions above are the approval.
-2. **Configure Project 2 on GitHub**: create/confirm the board, add the Status/Priority/Size/Estimate fields matching the v1.0 contract's shape, add the `Agent Role` field proposed in `github-project-2-contract.md`, confirm default repo `IncusLuminis/ai`. Needs GitHub org-admin access this build pass doesn't have.
-3. **Install Claude Code CLI on the local machine** (if not already) and confirm `gh`/SSH auth works there.
-4. **Run `scripts/setup-github-mcp.sh`** to register the GitHub MCP server, using a PAT stored in `.env` (gitignored). See `setup.md`.
-5. **Pilot on one low-risk Story inside `shared/ai` itself** — run `Product_Owner` → `Coder` → `Validator` end to end. No gate on the other three roles; use them as soon as there's a real Task/asset/publish need, pilot or not.
+2. **Check prerequisites, then configure Project 2 on GitHub**: run `scripts/check-prereqs.sh`, then `scripts/setup-github-mcp.sh`, then `scripts/setup-project-2-fields.sh` (all added this session — see `setup.md`). The field-creation script handles `Size`/`Estimate`/`Agent Role` via `gh`; Status option values and org-level Issue-field columns still need one manual pass in the Project 2 UI (the script prints exactly what's left).
+3. **Install Claude Code CLI on the local machine** (if not already) — `check-prereqs.sh` verifies this.
+4. **Run the three setup scripts above** in order (prereqs → MCP → Project 2 fields), using a PAT stored in `.env` (gitignored). See `setup.md`.
+5. **Pilot on a real Story from Project 1**, once steps 2–4 are done — run `Product_Owner` → `Coder` → `Validator` end to end against an actual product Story, not a synthetic task. No gate on the other three roles; use them as soon as there's a real Task/asset/publish need, pilot or not.
 6. **Revisit hook enforcement** after the pilot, per the deferred decision above.
 7. **Tighten `tools:` allowlists** on each agent definition based on what actually gets used — the ones shipped so far are reasonable starting points, not a security review.
 8. **Wire up local automation** once there's a reason to: local cron/`launchd` jobs on Mihal's machine for `Product_Owner` reporting, `Media_keeper` audits, etc. — not GitHub Actions, which would count as "another runner."
@@ -28,7 +29,7 @@
 ## 2. Open questions still not decided
 
 - **Cross-linking the v1.0 contract to the Project 2 contract**: `platform/standards/docs/process/github-project-management-contract.md`'s Owner line now points at `shared/ai`, but nothing in it yet mentions Project 2 exists. Small remaining edit, not done yet.
-- **Where the pilot's first real Story comes from**: step 5 needs an actual Story to pilot on, not just permission to pilot.
+- **Which Project 1 Story to pilot on**: step 5 needs a specific, actual Story picked once setup is done — not chosen yet.
 
 ## 3. What's been built so far (2026-07-19, second session)
 
@@ -36,8 +37,10 @@ In `shared/ai`:
 
 - `.claude/agents/coder.md`, `validator.md`, `devops.md`, `media-keeper.md` — Claude Code subagent definitions.
 - `.claude/skills/product-owner/`, `publisher/` — Claude Code skill definitions. (`DevOps` and `Media_keeper` ended up as agent-only, not also skills — see `execution-model.md §2`.)
+- `scripts/check-prereqs.sh` — read-only check for `claude`/`gh`/`git`/SSH access.
 - `scripts/setup-github-mcp.sh`, `.env.example`, `.gitignore` entries — local GitHub MCP setup, no secrets committed.
-- `setup.md` — step-by-step instructions for running this from Mihal's machine.
+- `scripts/setup-project-2-fields.sh` — idempotent `gh`-based creation of Project 2's `Size`/`Estimate`/`Agent Role` fields.
+- `setup.md` — step-by-step instructions for running all of the above from Mihal's machine.
 
 In `platform/standards` (separate repo, branch `chore/point-product-owner-skill-to-shared-ai`):
 
