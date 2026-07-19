@@ -42,11 +42,13 @@ In `shared/ai`:
 - `scripts/setup-project-2-fields.sh` — idempotent `gh`-based creation of Project 2's `Size`/`Estimate`/`Agent Role` fields.
 - `setup.md` — step-by-step instructions for running all of the above from Mihal's machine.
 
-**Verified on Mihal's actual machine (2026-07-19):** `scripts/check-prereqs.sh` passes clean — `claude`, `gh`, `git` on `PATH`, `gh` authenticated, SSH access to `github.com` confirmed. Next: `setup-github-mcp.sh`, then `setup-project-2-fields.sh` — not run yet.
+**Verified on Mihal's actual machine (2026-07-19):** `scripts/check-prereqs.sh` passes clean — `claude`, `gh`, `git` on `PATH`, `gh` authenticated, SSH access to `github.com` confirmed. `scripts/setup-github-mcp.sh` has been run with a real IncusLuminis-scoped PAT — `claude mcp list` shows `github: https://api.githubcopilot.com/mcp (HTTP) - ✔ Connected`. Along the way, hit and fixed an unrelated `nvm`-vs-Homebrew-Node `claude` install issue (documented in `setup.md §6`). Next: `setup-project-2-fields.sh` — not run yet.
+
+Also present but unrelated: `claude mcp list` shows a second, pre-existing entry `plugin:github:github` that fails to connect — looks like a bundled Claude Code plugin distinct from what this script adds. Not investigated yet; doesn't block anything since our own `github` entry connects fine.
 
 In `platform/standards` (separate repo, branch `chore/point-product-owner-skill-to-shared-ai`):
 
 - `skills/product-owner/SKILL.md` replaced with a redirect to `shared/ai`.
 - `docs/process/github-project-management-contract.md`'s Owner line updated to match; contract content otherwise untouched.
 
-Still not done: nothing actually connected (no PAT registered — this sandbox has no `claude` binary and isn't Mihal's machine), no GitHub board/fields configured, no hook. Nothing pushed to `origin` on either repo — both branches are local-only.
+Still not done: Project 2's `Size`/`Estimate`/`Agent Role` fields not created yet (`setup-project-2-fields.sh` not run), no hook. Nothing pushed to `origin` on either repo — both branches are local-only.
