@@ -42,6 +42,8 @@ In `shared/ai`:
 - `scripts/setup-project-2-fields.sh` — idempotent `gh`-based creation of Project 2's `Size`/`Estimate`/`Agent Role` fields.
 - `setup.md` — step-by-step instructions for running all of the above from Mihal's machine.
 
+**Verified on Mihal's actual machine (2026-07-19):** `scripts/check-prereqs.sh` passes clean — `claude`, `gh`, `git` on `PATH`, `gh` authenticated, SSH access to `github.com` confirmed. Next: `setup-github-mcp.sh`, then `setup-project-2-fields.sh` — not run yet.
+
 In `platform/standards` (separate repo, branch `chore/point-product-owner-skill-to-shared-ai`):
 
 - `skills/product-owner/SKILL.md` replaced with a redirect to `shared/ai`.
