@@ -33,6 +33,14 @@ claude mcp list         # confirm "github" is there
 
 This registers the official remote GitHub MCP server (`github/github-mcp-server`, Streamable HTTP) at Claude Code's default **local** scope — stored in your user-level `~/.claude.json`, never written into this repo. `.env` and `.mcp.json` are both gitignored regardless, in case a project-scoped setup is used later.
 
+**Once `claude mcp list` confirms the connection, delete `.env`** — it's only needed to feed the token into the script once; the live config `claude` actually reads from is `~/.claude.json`, outside this repo. Recreate `.env` from `.env.example` if you ever need to re-run the setup script.
+
+```bash
+rm .env
+```
+
+`.claude/settings.json` in this repo also denies the `Read`/`Bash(cat ...)` tools from touching `.env` or `.mcp.json`, as defense in depth for agents that have file access to this whole repo. Worth knowing: this doesn't fully close the gap — Anthropic has an open issue where `Read` deny rules aren't always enforced for `.env` specifically, and a `Bash` deny rule only blocks the exact command pattern listed (`cat .env`), not every way to read a file (`head`, `less`, a one-line Python script, etc.). The real protection is deleting `.env` once it's served its purpose, not the deny rule alone.
+
 ## 2. Configure the Project 2 board
 
 Project 2 (`IncusLuminis/projects/2`) is the agent team's *own* operational board — where `Product_Owner` tracks work on building out this team itself. It's separate from **Project 1** (`IncusLuminis/projects/1`), the org's actual product backlog, which is where the team's agents will do their first real, non-synthetic work once this setup is done — see `../process/github-project-2-contract.md §2` for the full split.
