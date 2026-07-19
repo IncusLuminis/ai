@@ -6,7 +6,7 @@
 
 ## Overview
 
-Describe the purpose of the repository, the problem it solves, and its role within the **IncusLuminis** ecosystem.
+Home of the IncusLuminis agent team design: six specialized agents (`Product_Owner`, `Coder`, `Validator`, `DevOps`, `Publisher`, `Media_keeper`) that help run the portfolio's roadmaps, code, QA, infrastructure, and publishing. Start at [`docs/agents/README.md`](./docs/agents/README.md).
 
 ---
 
@@ -65,6 +65,8 @@ Project documentation is located in the `docs/` directory.
 
 | Directory | Purpose |
 |-----------|---------|
+| docs/agents | Agent team design: charters, orchestration model, implementation roadmap |
+| docs/process | Process contracts (e.g. the Project 2 GitHub board contract) |
 | docs/architecture | Architecture documentation |
 | docs/adr | Architecture Decision Records |
 | docs/api | API documentation |
