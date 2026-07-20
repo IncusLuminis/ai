@@ -20,6 +20,8 @@ import logging
 import os
 import subprocess
 import sys
+import threading
+from collections import defaultdict, deque
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -31,6 +33,81 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("slack-bridge")
+
+# Passive channel-history buffer: every bot reads every message (so it has
+# real conversational context), but only the bot that's actually @mentioned
+# replies. Each bridge process keeps its own buffer, keyed by channel, capped
+# at MAX_HISTORY_MESSAGES entries; deduped by Slack message `ts` so the same
+# message recorded via both the "message" and "app_mention" events (Slack
+# fires both for a channel message that mentions the bot) doesn't double up.
+_HISTORY_LOCK = threading.Lock()
+_SKIP_SUBTYPES = {
+    "message_changed",
+    "message_deleted",
+    "channel_join",
+    "channel_leave",
+    "channel_topic",
+    "channel_purpose",
+}
+_name_cache = {}
+
+
+def _make_history():
+    max_len = int(os.environ.get("MAX_HISTORY_MESSAGES", "30"))
+    return defaultdict(lambda: deque(maxlen=max_len))
+
+
+_channel_history = _make_history()
+
+
+def _display_name(client, event):
+    """Best-effort human/bot display name for a Slack message event."""
+    if event.get("bot_id"):
+        name = event.get("username") or (event.get("bot_profile") or {}).get("name")
+        return name or "bot"
+    user_id = event.get("user")
+    if not user_id:
+        return "someone"
+    with _HISTORY_LOCK:
+        cached = _name_cache.get(user_id)
+    if cached:
+        return cached
+    name = user_id
+    try:
+        info = client.users_info(user=user_id)
+        name = info["user"].get("real_name") or info["user"].get("name") or user_id
+    except Exception:
+        pass  # missing users:read scope, API hiccup, etc. - fall back to the raw ID
+    with _HISTORY_LOCK:
+        _name_cache[user_id] = name
+    return name
+
+
+def _record_message(client, event):
+    """Passively remember a message for context. Never replies."""
+    if event.get("subtype") in _SKIP_SUBTYPES:
+        return
+    text = (event.get("text") or "").strip()
+    if not text:
+        return
+    channel = event.get("channel")
+    ts = event.get("ts")
+    if not channel or not ts:
+        return
+    name = _display_name(client, event)
+    with _HISTORY_LOCK:
+        hist = _channel_history[channel]
+        if any(existing_ts == ts for existing_ts, _ in hist):
+            return
+        hist.append((ts, f"{name}: {text}"))
+
+
+def _format_history(channel, exclude_ts=None):
+    with _HISTORY_LOCK:
+        lines = [line for ts, line in _channel_history.get(channel, []) if ts != exclude_ts]
+    if not lines:
+        return ""
+    return "Recent channel context (oldest to newest):\n" + "\n".join(lines) + "\n\n"
 
 
 def parse_args():
@@ -65,6 +142,13 @@ def main():
 
     app = App(token=bot_token)
 
+    @app.event("message")
+    def handle_message(event, client):
+        # Passive listener: every bot reads every channel message so it has
+        # real context, but replying only ever happens in handle_app_mention
+        # below - this handler never calls `say`.
+        _record_message(client, event)
+
     @app.event("app_mention")
     def handle_app_mention(event, say, client):
         channel = event["channel"]
@@ -73,6 +157,10 @@ def main():
         # Strip the leading "<@BOTID>" mention token(s).
         text = " ".join(w for w in raw_text.split() if not (w.startswith("<@") and w.endswith(">")))
         text = text.strip()
+
+        # Record this message too (in case the "message" event for it hasn't
+        # arrived yet, or never does) - _record_message dedupes by ts.
+        _record_message(client, event)
 
         if not text:
             say(text="Слышу тебя, но сообщение пустое — напиши, что нужно сделать.", channel=channel, thread_ts=ts)
@@ -83,13 +171,19 @@ def main():
         except Exception:
             pass  # non-fatal - e.g. missing reactions:write scope
 
+        history_block = _format_history(channel, exclude_ts=ts)
+        sender = _display_name(client, event)
+
         prompt = (
             f'You are acting as the IncusLuminis "{agent_role}" agent, responding to a Slack '
             f"message in the team channel. Your mission, responsibilities and boundaries are "
             f"defined in {agent_role_doc} and the corresponding skill/agent definition under "
             f".claude/ in this repo - follow them. Respond concisely, the way a teammate would "
-            f"in chat, not a full written report unless the message actually asks for one.\n\n"
-            f"Slack message:\n{text}"
+            f"in chat, not a full written report unless the message actually asks for one. "
+            f"Other agents may be present in the same channel and reply to their own mentions "
+            f"separately - only respond to what's addressed to you.\n\n"
+            f"{history_block}"
+            f"Slack message (mentions you) from {sender}:\n{text}"
         )
 
         log.info("Invoking %s for: %s", claude_bin, text[:200])

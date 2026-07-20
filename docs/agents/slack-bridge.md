@@ -40,16 +40,24 @@ Beyond the one-way setup in `setup.md`, each bot's Slack app additionally needs:
 
 - **Bot Token Scopes**: `app_mentions:read`, `channels:history` (added on top of `chat:write`, `chat:write.public`, `users:read`, etc.)
 - **Socket Mode**: enabled, with an **App-Level Token** (scope `connections:write`) generated under Basic Information
-- **Event Subscriptions**: enabled, subscribed to bot event `app_mention` (`message.channels` optionally, not currently consumed by `bridge.py`)
+- **Event Subscriptions**: enabled, subscribed to bot events `app_mention` **and** `message.channels` (both required — see §8)
 - App reinstalled to the workspace after adding these scopes
 
-## 6. Known gaps (v1, not yet solved)
+## 6. Shared context, single responder
 
-- **No conversation memory** — each `@mention` is an isolated `claude -p` call. A real back-and-forth (human asks a follow-up referencing the previous answer) won't work yet; would need thread history fetched via `client.conversations_replies` and folded into the prompt.
+Principle, set 2026-07-20 once a second Slack app entered the picture: **every bot passively reads every channel message, but only the one actually `@mention`ed replies.** Without this, subscribing to `message.channels` at all would have no point, and without the "only the mentioned one replies" half, six bots in one channel would each answer every message — noise, and cross-talk between bots replying to each other's replies.
+
+Implementation in `bridge.py`: a `message` event handler records every message (text + best-effort sender name) into an in-memory, per-channel rolling buffer (`MAX_HISTORY_MESSAGES`, default 30) — it never calls `say()`, so it can't itself trigger a reply. The `app_mention` handler is the only place a reply is ever sent; when it fires, it pulls that buffer as context and includes it in the `claude -p` prompt, so the reply is grounded in the actual recent conversation, not just the single message that mentioned it.
+
+This buffer is **per-process, not shared across bots** — each role's `bridge.py` instance builds its own copy from the same live Slack event stream, so as long as all six have been running, they end up with equivalent (not identical) context. No shared database or file needed for this; nothing persists across a restart.
+
+## 7. Known gaps (v1, not yet solved)
+
+- **Per-mention only, no true multi-turn memory** — `@mention`ing a bot gives it the recent channel history as context (§8), so it's aware of what's been said, but there's no persistent thread/session state across separate mentions beyond that rolling buffer — no explicit "continue our last exchange" tracking.
 - **Synchronous / single-threaded** — one bridge process handles one mention at a time. Fine for the current one-human, one-bot-at-a-time usage; would need a queue or async handling to scale.
 - **Headless permission behavior untested** — `claude -p` may hit a tool-use permission prompt it can't answer non-interactively for anything beyond what `.claude/settings.json` already allows. Needs a real test against a task that actually exercises tools (e.g. GitHub MCP), not just a text-only question.
 - **Five roles not wired yet** — only `Product_Owner` has a Socket Mode app configured. Repeating the Slack-app-config steps and running another `bridge.py` instance per role is mechanical but not done.
 
-## 7. Next steps
+## 8. Next steps
 
-See `implementation-roadmap.md` decision log (2026-07-20 entry) and step list — validating this end to end on a real Product_Owner task is the immediate next step before replicating it to the other five roles.
+See `implementation-roadmap.md` decision log (2026-07-20 entries) and step list — validating this end to end on a real Product_Owner task is the immediate next step before replicating it to the other five roles.

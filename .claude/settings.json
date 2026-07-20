@@ -3,6 +3,7 @@
   "permissions": {
     "deny": [
       "Read(./.env)",
+      "Read(./.env.*)",
       "Read(./.mcp.json)",
       "Read(./**/*.pem)",
       "Read(./**/*.key)",

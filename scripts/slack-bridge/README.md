@@ -43,25 +43,28 @@ Incus PO to answer `@mentions` in Slack. `Ctrl+C` to stop.
 
 ## Adding another role
 
-1. Create its Slack app the same way as Incus PO (icon, Bot Token Scopes,
-   Socket Mode + App-Level Token, Event Subscriptions → `app_mention`).
-2. Create `.env.<role>` at the repo root with that app's tokens and
-   `AGENT_ROLE` / `AGENT_ROLE_DOC` set accordingly (e.g. `AGENT_ROLE=Coder`,
-   `AGENT_ROLE_DOC=docs/agents/coder.md`).
-3. Run a second instance: `python3 bridge.py --env-file ../../.env.coder`.
+Full step-by-step: [`../../docs/agents/adding-a-slack-agent.md`](../../docs/agents/adding-a-slack-agent.md).
+
+Short version: create its Slack app the same way as Incus PO (icon, Bot
+Token Scopes, Socket Mode + App-Level Token, Event Subscriptions →
+`app_mention`) → create `.env.<role>` at the repo root with that app's
+tokens and `AGENT_ROLE` / `AGENT_ROLE_DOC` set → run a second instance:
+`python3 bridge.py --env-file ../../.env.coder`.
 
 Each role is its own process, its own tokens, its own terminal/session.
 
 ## Known limitations (v1)
 
-- Only replies to `@mentions`, not to every channel message — avoids the bot
-  reacting to everything anyone else (human or bot) posts.
+- Replies only to `@mentions` — but reads every channel message (needs
+  `message.channels` subscribed, see `adding-a-slack-agent.md` step 9) into
+  a rolling per-channel buffer (`MAX_HISTORY_MESSAGES`, default 30) so a
+  reply has real conversational context, not just the one message that
+  mentioned it. See `../../docs/agents/slack-bridge.md §6`. This buffer is
+  per-process (per bot), in-memory only, lost on restart — not a shared
+  conversation log across bots or across runs.
 - Synchronous: one Slack mention is fully handled — including the blocking
   `claude -p` call — before the next is picked up. Fine for one person
   messaging one bot at a time; will queue up under real concurrent use.
-- No memory across messages. Each reply is a fresh `claude -p` call with no
-  access to prior Slack conversation — good for one-shot questions, not yet
-  for a multi-turn back-and-forth.
 - Assumes `claude -p` can complete a real task without hitting an
   interactive permission prompt it can't answer headlessly. Not yet
   validated end to end against a tool-heavy request (e.g. "create a Story on
