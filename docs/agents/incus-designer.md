@@ -22,8 +22,8 @@ Finished graphic assets (logos, icons, illustrations), handed to `Media_keeper`.
 
 ## Tools & access required
 
-- Generative image-model access, for drafts and concept exploration.
-- Vector/code design tooling (SVG editing or equivalent) to finalize a concept into a clean, reusable asset.
+- Generative image-model access, for drafts and concept exploration. **Available as of 2026-07-21**: via Codex CLI (`codex exec`, OpenAI's `image_gen`/gpt-image-2), installed and authenticated on Mihal's machine, invoked via `Bash` from this role's executable definition (`.claude/agents/incus-designer.md`). A separate vendor tool shelled out to, same as any other CLI dependency.
+- Vector/code design tooling (SVG editing or equivalent) to finalize a concept into a clean, reusable asset. Built.
 - Write access to each product's `assets/` folders (for source files before `Media_keeper` takes over storage).
 
 ## Explicit boundaries — does NOT
@@ -36,6 +36,7 @@ Finished graphic assets (logos, icons, illustrations), handed to `Media_keeper`.
 ## Handoffs
 
 - **From any role**: brief for a specific graphic asset.
+- **From Content_Editor**: path to an image-generation prompt file (paper-summary pipeline) instead of a written brief.
 - **To Media_keeper**: finished asset for storage/CDN/canonical URL.
 
 ## Success metrics

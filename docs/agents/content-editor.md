@@ -18,7 +18,7 @@ Original-language drafts from `Content_Master`; translated drafts from `Content_
 
 ## Outputs
 
-Edited, clichés-checked, readable text — in the original language, ready for `Content_Translator`; and again in the target language, ready for `Publisher`/`Coder`.
+Edited, clichés-checked, readable text — in the original language, ready for `Content_Translator`; and again in the target language, ready for `Publisher`/`Coder`. Also, alongside a piece, a short image-generation prompt file for `Incus_Designer` to turn into an illustration.
 
 ## Tools & access required
 
@@ -41,6 +41,7 @@ Edited, clichés-checked, readable text — in the original language, ready for 
 - **From Content_Translator**: translated text, for a target-language readability pass.
 - **To Content_Translator**: translated text sent back, only for substantial rewrites needing the translator's input.
 - **To Publisher / Coder**: edited content or UI strings, in whichever language is final for that handoff.
+- **To Incus_Designer**: path to an image-generation prompt file, when a piece has a visual hook worth illustrating.
 
 ## Success metrics
 
