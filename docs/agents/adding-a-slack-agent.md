@@ -66,14 +66,25 @@ Step-by-step for turning one more agent role into a two-way Slack teammate, the 
 
     (Fill in the row from the table above for whichever role you're adding.)
 
-15. From `scripts/slack-bridge/`, reuse the existing virtualenv (no need to recreate it):
+15. From `scripts/slack-bridge/`, reuse the existing virtualenv (no need to recreate it), then run it one of two ways:
+
+    **Standalone** (its own process/terminal, alongside whatever's already running for other roles):
 
     ```bash
     source .venv/bin/activate
     python3 bridge.py --env-file ../../.env.coder
     ```
 
-16. Leave it running in its own terminal — it's a separate process per role, alongside the one already running for Incus PO.
+    **Or together with the rest**, one process/terminal for every role that has a `.env.<role>` file — stop whatever's currently running (`Ctrl+C`) and restart with:
+
+    ```bash
+    source .venv/bin/activate
+    python3 run_all.py
+    ```
+
+    See `../../scripts/slack-bridge/README.md § Running several roles in one process` for details.
+
+16. Leave it running.
 
 ## 9. Test it
 

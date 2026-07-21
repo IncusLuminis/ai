@@ -48,10 +48,64 @@ Full step-by-step: [`../../docs/agents/adding-a-slack-agent.md`](../../docs/agen
 Short version: create its Slack app the same way as Incus PO (icon, Bot
 Token Scopes, Socket Mode + App-Level Token, Event Subscriptions →
 `app_mention`) → create `.env.<role>` at the repo root with that app's
-tokens and `AGENT_ROLE` / `AGENT_ROLE_DOC` set → run a second instance:
-`python3 bridge.py --env-file ../../.env.coder`.
+tokens and `AGENT_ROLE` / `AGENT_ROLE_DOC` set.
 
-Each role is its own process, its own tokens, its own terminal/session.
+Then run it either standalone (its own process/terminal) or together with
+the rest (one process/terminal) - see below.
+
+## Running one role standalone
+
+```bash
+python3 bridge.py --env-file ../../.env.coder
+```
+
+One process per role, one terminal per role. Simple, fully isolated - a
+crash in one role's process can't affect another's.
+
+## Running several roles in one process
+
+```bash
+python3 run_all.py
+```
+
+Auto-discovers every `.env.<role>` file at the repo root and starts each in
+its own thread, inside this one process/terminal — no need for six open
+terminals. `Ctrl+C` stops all of them together. Each role is still its own
+Slack app / Socket Mode connection (own tokens, own session file under
+`.sessions/`) — this only changes how many terminals/processes you're
+managing, not the underlying architecture. To run only some roles:
+
+```bash
+python3 run_all.py .env.product-owner .env.coder
+```
+
+If one role's thread crashes, it's logged (tagged by role) and the others
+keep running — check the log output to see which one, if any, died, and
+restart the whole thing (`run_all.py` doesn't currently auto-restart a
+single dead role).
+
+## Persistent sessions
+
+Each role's `bridge.py` process keeps one continuous `claude` session across
+all its `@mentions`, not a fresh one-shot per message — the bot remembers
+its own prior replies. Implementation: the first message starts a session
+with `claude --session-id <uuid>`; every later message resumes it with
+`claude --resume <uuid>`. The uuid is saved in
+`scripts/slack-bridge/.sessions/<role-slug>.txt` (gitignored, one file per
+role) so it survives `bridge.py` restarts.
+
+To force a fresh start for a role (e.g. it's gotten confused, or you want to
+reset a character's conversation), stop the process and delete its file:
+
+```bash
+rm scripts/slack-bridge/.sessions/<role-slug>.txt
+```
+
+This is separate from the channel-history buffer above: the session is that
+bot's own memory of its direct exchanges; the buffer is peripheral
+awareness of the wider channel between mentions. Both get included on
+every reply, which means the prompt grows over a long-running session —
+fine for now, revisit if it becomes a real problem.
 
 ## Known limitations (v1)
 
@@ -69,3 +123,7 @@ Each role is its own process, its own tokens, its own terminal/session.
   interactive permission prompt it can't answer headlessly. Not yet
   validated end to end against a tool-heavy request (e.g. "create a Story on
   Project 2") — try that before relying on it for real work.
+- `--session-id`/`--resume` flag behavior assumed from Claude Code CLI docs,
+  not verified against a live run in this environment (no `claude` binary
+  here) — if session resume doesn't work as expected on your machine, check
+  `claude --help` first.

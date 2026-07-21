@@ -2,27 +2,34 @@
 
 **Status:** Connected and running — GitHub MCP live, Project 2 fields configured, all four Agent roles verified running concurrently on real (read-only) work. Formal pilot (`Product_Owner` → `Coder` → `Validator` on a Project 1 Story) not started yet.
 **Owner:** Product_Owner role (until a human owner is assigned)
-**Version:** 0.4 — 2026-07-19
+**Version:** 0.5 — 2026-07-21
 **Branch:** `feature/agent-team-design`, reviewed and merged into `main` by Mihal
 
 ## 1. Purpose
 
-IncusLuminis runs a portfolio of independent repositories (products, shared libraries, platform standards, tooling, content, media) under one organization. This folder designs *and now hosts* a standing team of six specialized agents to help run that portfolio day to day: turning specs into tracked work, writing and validating code, keeping infrastructure healthy, and getting finished content and media out the door.
+IncusLuminis runs a portfolio of independent repositories (products, shared libraries, platform standards, tooling, content, media) under one organization. This folder designs *and now hosts* a standing team of specialized agents to help run that portfolio day to day: turning specs into tracked work, writing and validating code, keeping infrastructure healthy, and getting finished content and media out the door. Six roles are built and running; several more content/production roles are proposed (see the Status column below).
 
 `shared/ai` is the team's home: executable agent/skill definitions live in `.claude/` at this repo's root; this `docs/agents/` folder is the design and reference material behind them. See `setup.md` for how to actually run any of it. See `implementation-roadmap.md` for current status and what's still not done.
 
 ## 2. Roster
 
-| Agent | One-line mission | Charter | Executable definition |
-|---|---|---|---|
-| `Product_Owner` | Owns roadmaps, requirements, specs, backlog, progress reporting | [product-owner.md](./product-owner.md) | `.claude/skills/product-owner/` |
-| `Coder` | Implements Stories in code, in its own branch, per repo | [coder.md](./coder.md) | `.claude/agents/coder.md` |
-| `Validator` | QA gate: validates quality of code/content before merge | [validator.md](./validator.md) | `.claude/agents/validator.md` |
-| `DevOps` | Infrastructure, CI/CD, supporting scripts, environments | [devops.md](./devops.md) | `.claude/agents/devops.md` |
-| `Publisher` | Publishes finished content: blogs, social, PDFs, documents | [publisher.md](./publisher.md) | `.claude/skills/publisher/` |
-| `Media_keeper` | Manages binary/media assets and CDN + local storage | [media-keeper.md](./media-keeper.md) | `.claude/agents/media-keeper.md` |
+| Agent | One-line mission | Charter | Executable definition | Status |
+|---|---|---|---|---|
+| `Product_Owner` | Owns roadmaps, requirements, specs, backlog, progress reporting | [product-owner.md](./product-owner.md) | `.claude/skills/product-owner/` | Built |
+| `Coder` | Implements Stories in code, in its own branch, per repo | [coder.md](./coder.md) | `.claude/agents/coder.md` | Built |
+| `Validator` | QA gate: validates quality of code/content before merge | [validator.md](./validator.md) | `.claude/agents/validator.md` | Built |
+| `DevOps` | Infrastructure, CI/CD, supporting scripts, environments | [devops.md](./devops.md) | `.claude/agents/devops.md` | Built |
+| `Publisher` ("Fellow Publisher") | Publishes finished content Content_Master produces — local files (PDFs), blogs, social | [publisher.md](./publisher.md) | `.claude/skills/publisher/` | Built |
+| `Media_keeper` ("Media Librarian") | Produces and owns all binary media — including external platforms (HeyGen, TikTok, YouTube) — and CDN, across every site | [media-keeper.md](./media-keeper.md) | `.claude/agents/media-keeper.md` | Built |
+| `Content_Master` ("Master") | Produces and owns all text content across every site | [content-master.md](./content-master.md) | *(not yet built)* | Proposed |
+| `Content_Editor` ("Editor") | Reviews content from `Content_Master` and `Content_Translator` for style, clichés, and readability, against a shared house linguistic rule set | [content-editor.md](./content-editor.md) | *(not yet built)* | Proposed |
+| `Studio_Visualizer` ("Visualizer") | Produces all animations (scientific or HUD) for Visualization Studio and Stellar Attractor, as Python/Jupyter notebooks rendering to webm/gif/mp4 | [studio-visualizer.md](./studio-visualizer.md) | *(not yet built)* | Proposed |
+| `Content_Translator` ("Translator") | Translates content and UI copy between Russian and English, org-wide | [content-translator.md](./content-translator.md) | *(not yet built)* | Proposed |
+| `Fellow_Astrophysicist` ("Astrophysicist") | Reviews astrophysics/astronomy content for scientific accuracy (NebulaCast, Visualization Studio, Stellar Attractor) | [fellow-astrophysicist.md](./fellow-astrophysicist.md) | *(not yet built)* | Proposed |
+| `Fellow_Historian` ("Historian") | Reviews Roads of Times content for historical accuracy | [fellow-historian.md](./fellow-historian.md) | *(not yet built)* | Proposed |
+| `Incus_Designer` ("Designer") | Owns logo and graphic design across every site | [incus-designer.md](./incus-designer.md) | *(not yet built)* | Proposed |
 
-Each charter file follows the same shape: mission, responsibilities, inputs/outputs, tools & access required, explicit boundaries (what it does *not* do), handoffs to the other five roles, and success metrics. See `execution-model.md §2` for why each role became a Skill vs. an Agent.
+Each charter file follows the same shape: mission, responsibilities, inputs/outputs, tools & access required, explicit boundaries (what it does *not* do), handoffs to the other roles, and success metrics. See `execution-model.md §2` for why each built role became a Skill vs. an Agent. The `Proposed` rows aren't approved/built yet — see [proposed-new-roles.md](./proposed-new-roles.md) for the reasoning behind this set (Stellar Attractor's named in-universe personas are a separate, later effort — not part of this functional roster).
 
 ## 3. How the pieces fit together
 

@@ -40,7 +40,14 @@ if [ -z "${GITHUB_PAT}" ]; then
   exit 1
 fi
 
-claude mcp add-json github "{\"type\":\"http\",\"url\":\"https://api.githubcopilot.com/mcp\",\"headers\":{\"Authorization\":\"Bearer ${GITHUB_PAT}\"}}"
+# X-MCP-Toolsets: the remote server's *default* toolset (used when this
+# header is omitted) does NOT include `projects` - Product_Owner needs it to
+# read/update GitHub Projects boards (Project 1, Project 2). Explicit list
+# below = default toolset's coverage (repos, issues, pull_requests, orgs,
+# users, labels) plus `projects`. See docs/agents/slack-bridge.md and
+# https://github.com/github/github-mcp-server/blob/main/docs/remote-server.md#optional-headers
+claude mcp remove github >/dev/null 2>&1 || true
+claude mcp add-json github "{\"type\":\"http\",\"url\":\"https://api.githubcopilot.com/mcp\",\"headers\":{\"Authorization\":\"Bearer ${GITHUB_PAT}\",\"X-MCP-Toolsets\":\"repos,issues,pull_requests,orgs,users,labels,projects\"}}"
 
 echo
 echo "Done. Verify with:"
@@ -49,4 +56,7 @@ echo "  claude mcp get github"
 echo
 echo "If 'claude mcp add-json' isn't recognized, you're on Claude Code < 2.1.1 -"
 echo "use the legacy form instead:"
-echo "  claude mcp add --transport http github https://api.githubcopilot.com/mcp -H \"Authorization: Bearer \$GITHUB_PAT\""
+echo "  claude mcp remove github"
+echo "  claude mcp add --transport http github https://api.githubcopilot.com/mcp \\"
+echo "    -H \"Authorization: Bearer \$GITHUB_PAT\" \\"
+echo "    -H \"X-MCP-Toolsets: repos,issues,pull_requests,orgs,users,labels,projects\""

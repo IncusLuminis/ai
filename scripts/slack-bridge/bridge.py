@@ -6,13 +6,16 @@ Runs a Socket Mode connection for one agent role's Slack app (e.g. "Incus PO"
 for Product_Owner) and forwards @mentions to a headless `claude -p`
 invocation, posting the reply back to the same Slack thread.
 
-One process per role. To wire up a second role, create another
-`.env.<role>` file at the repo root and run another instance of this script
-pointed at it — see README.md in this folder.
+Two ways to run several roles: as separate processes (`python3 bridge.py
+--env-file ../../.env.coder` per role, one terminal each), or all in this
+one process via `run_all.py`, which imports `run_role()` from here and
+starts each role in its own thread. Either way each role is still its own
+Slack app / Socket Mode connection - `run_all.py` just avoids needing N
+open terminals for N connections.
 
-This is a first pass, not a finished integration: synchronous, no memory
-across messages, only responds to @mentions. See
-docs/agents/slack-bridge.md for the design and known limitations.
+This is a first pass, not a finished integration: synchronous per role,
+only responds to @mentions. See docs/agents/slack-bridge.md for the design
+and known limitations.
 """
 
 import argparse
@@ -21,10 +24,11 @@ import os
 import subprocess
 import sys
 import threading
+import uuid
 from collections import defaultdict, deque
 from pathlib import Path
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
@@ -52,12 +56,14 @@ _SKIP_SUBTYPES = {
 _name_cache = {}
 
 
-def _make_history():
-    max_len = int(os.environ.get("MAX_HISTORY_MESSAGES", "30"))
-    return defaultdict(lambda: deque(maxlen=max_len))
-
-
-_channel_history = _make_history()
+# Read lazily (per new channel seen), not once at import time, so it still
+# picks up MAX_HISTORY_MESSAGES if set later. This buffer is process-wide by
+# design: when several roles run in one process via run_all.py, they share
+# it (they're all watching the same live channel anyway, so one buffer is
+# simpler and more consistent than N duplicate copies) - so this setting
+# isn't really "per role" once you're running that way. Set it as a real
+# exported env var, not inside a single role's .env.<role> file.
+_channel_history = defaultdict(lambda: deque(maxlen=int(os.environ.get("MAX_HISTORY_MESSAGES", "30"))))
 
 
 def _display_name(client, event):
@@ -110,35 +116,98 @@ def _format_history(channel, exclude_ts=None):
     return "Recent channel context (oldest to newest):\n" + "\n".join(lines) + "\n\n"
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Bridge a Slack app to a Claude Code agent role.")
-    parser.add_argument(
-        "--env-file",
-        default=str(REPO_ROOT / ".env.product-owner"),
-        help="Path to the .env file with this role's Slack tokens (default: %(default)s)",
-    )
-    return parser.parse_args()
+# Persistent per-role Claude Code session: one continuous conversation per
+# bot, surviving across separate @mentions (not just within one), so the bot
+# remembers its own prior replies instead of starting fresh every time. Not
+# shared across roles/bots - each has its own session file and its own
+# actual Claude Code conversation. Survives bridge.py restarts (the session
+# id is on disk); does NOT survive `claude` itself losing/expiring the
+# session, which is handled with a one-time fallback below.
+_SESSIONS_DIR = Path(__file__).resolve().parent / ".sessions"
 
 
-def main():
-    args = parse_args()
-    env_path = Path(args.env_file)
-    if env_path.exists():
-        load_dotenv(env_path)
-        log.info("Loaded env from %s", env_path)
+def _session_file(role_slug):
+    return _SESSIONS_DIR / f"{role_slug}.txt"
+
+
+def _load_session_id(role_slug):
+    f = _session_file(role_slug)
+    if f.exists():
+        sid = f.read_text().strip()
+        return sid or None
+    return None
+
+
+def _save_session_id(role_slug, session_id):
+    _SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+    _session_file(role_slug).write_text(session_id)
+
+
+def _run_claude(prompt, role_slug, claude_bin, timeout_seconds):
+    """Run `claude -p`, resuming this role's persistent session if one
+    exists, so the bot has real multi-turn memory of its own conversation.
+    Starts a fresh session (new id) the first time, or if resuming an old
+    one fails (expired/missing - `claude` isn't ours to guarantee)."""
+    session_id = _load_session_id(role_slug)
+    if session_id:
+        cmd = [claude_bin, "--resume", session_id, "-p", prompt]
     else:
+        session_id = str(uuid.uuid4())
+        cmd = [claude_bin, "--session-id", session_id, "-p", prompt]
+
+    result = subprocess.run(
+        cmd, cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=timeout_seconds
+    )
+
+    if result.returncode != 0 and _load_session_id(role_slug):
+        log.warning(
+            "Resuming session %s failed (exit %s) - starting a fresh one for %s",
+            session_id,
+            result.returncode,
+            role_slug,
+        )
+        session_id = str(uuid.uuid4())
+        cmd = [claude_bin, "--session-id", session_id, "-p", prompt]
+        result = subprocess.run(
+            cmd, cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=timeout_seconds
+        )
+
+    _save_session_id(role_slug, session_id)
+    return result
+
+
+def run_role(env_file):
+    """Load one role's `.env.<role>` file and start its Slack Socket Mode
+    connection. Blocks forever (SocketModeHandler.start()).
+
+    Deliberately does NOT use `dotenv.load_dotenv()`, which would write into
+    the shared process environment (`os.environ`) - fine for one role per
+    process, but a race when `run_all.py` calls this from several threads at
+    once (each role's SLACK_BOT_TOKEN etc. would stomp on the others').
+    Instead reads this role's file into its own local dict via
+    `dotenv_values()`, so each call/thread is fully isolated.
+    """
+    env_path = Path(env_file)
+    file_vars = dotenv_values(env_path) if env_path.exists() else {}
+    if not env_path.exists():
         log.warning("%s not found - relying on already-exported environment variables", env_path)
 
-    bot_token = os.environ.get("SLACK_BOT_TOKEN")
-    app_token = os.environ.get("SLACK_APP_TOKEN")
-    if not bot_token or not app_token:
-        sys.exit("SLACK_BOT_TOKEN and SLACK_APP_TOKEN must be set (via --env-file or the environment).")
+    def cfg(key, default=None):
+        # This role's .env file wins, then anything already exported in the
+        # shell, then the default.
+        return file_vars.get(key) or os.environ.get(key) or default
 
-    agent_role = os.environ.get("AGENT_ROLE", "Product_Owner")
-    agent_role_doc = os.environ.get("AGENT_ROLE_DOC", "docs/agents/product-owner.md")
-    claude_bin = os.environ.get("CLAUDE_BIN", "claude")
-    timeout_seconds = int(os.environ.get("CLAUDE_TIMEOUT_SECONDS", "300"))
-    max_reply_chars = int(os.environ.get("MAX_REPLY_CHARS", "3000"))
+    bot_token = cfg("SLACK_BOT_TOKEN")
+    app_token = cfg("SLACK_APP_TOKEN")
+    if not bot_token or not app_token:
+        sys.exit(f"SLACK_BOT_TOKEN and SLACK_APP_TOKEN must be set for {env_file} (file or environment).")
+
+    agent_role = cfg("AGENT_ROLE", "Product_Owner")
+    agent_role_doc = cfg("AGENT_ROLE_DOC", "docs/agents/product-owner.md")
+    claude_bin = cfg("CLAUDE_BIN", "claude")
+    timeout_seconds = int(cfg("CLAUDE_TIMEOUT_SECONDS", "300"))
+    max_reply_chars = int(cfg("MAX_REPLY_CHARS", "3000"))
+    role_slug = cfg("ROLE_SLUG") or agent_role.lower().replace("_", "-").replace(" ", "-")
 
     app = App(token=bot_token)
 
@@ -186,15 +255,9 @@ def main():
             f"Slack message (mentions you) from {sender}:\n{text}"
         )
 
-        log.info("Invoking %s for: %s", claude_bin, text[:200])
+        log.info("Invoking %s (session=%s) for: %s", claude_bin, role_slug, text[:200])
         try:
-            result = subprocess.run(
-                [claude_bin, "-p", prompt],
-                cwd=str(REPO_ROOT),
-                capture_output=True,
-                text=True,
-                timeout=timeout_seconds,
-            )
+            result = _run_claude(prompt, role_slug, claude_bin, timeout_seconds)
             reply = (result.stdout or "").strip()
             if result.returncode != 0:
                 err = (result.stderr or "").strip()[-1500:]
@@ -223,6 +286,24 @@ def main():
 
     log.info("Starting Socket Mode for role=%s ...", agent_role)
     SocketModeHandler(app, app_token).start()
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Bridge a single Slack app to a Claude Code agent role.")
+    parser.add_argument(
+        "--env-file",
+        default=str(REPO_ROOT / ".env.product-owner"),
+        help="Path to the .env file with this role's Slack tokens (default: %(default)s)",
+    )
+    return parser.parse_args()
+
+
+def main():
+    """CLI entry point for running one role standalone (one process, one
+    terminal). To run several roles in a single process/terminal instead,
+    use run_all.py."""
+    args = parse_args()
+    run_role(args.env_file)
 
 
 if __name__ == "__main__":

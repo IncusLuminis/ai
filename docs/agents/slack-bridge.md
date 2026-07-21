@@ -51,9 +51,13 @@ Implementation in `bridge.py`: a `message` event handler records every message (
 
 This buffer is **per-process, not shared across bots** — each role's `bridge.py` instance builds its own copy from the same live Slack event stream, so as long as all six have been running, they end up with equivalent (not identical) context. No shared database or file needed for this; nothing persists across a restart.
 
+### 6.1 Persistent per-role sessions
+
+Added 2026-07-20, once character-persona agents made "answers with amnesia after every message" actually matter (a chat companion that forgets the last exchange isn't a companion). Each role's `bridge.py` process now keeps **one continuous `claude` session across all its `@mentions`**, via `claude --session-id <uuid>` on first use and `claude --resume <uuid>` on every one after, with the uuid persisted in `scripts/slack-bridge/.sessions/<role-slug>.txt` (gitignored) so it survives process restarts. This is distinct from, and complementary to, the passive channel-history buffer above: the session is the bot's memory of its *own* conversation; the buffer is its peripheral awareness of everyone else's. See `scripts/slack-bridge/README.md § Persistent sessions` for the operational detail (including how to reset one).
+
 ## 7. Known gaps (v1, not yet solved)
 
-- **Per-mention only, no true multi-turn memory** — `@mention`ing a bot gives it the recent channel history as context (§8), so it's aware of what's been said, but there's no persistent thread/session state across separate mentions beyond that rolling buffer — no explicit "continue our last exchange" tracking.
+- **Prompt grows unbounded over a long session** — persistent sessions (§6.1) plus the channel-history block on every turn means a bot that's been running and chatting for days accumulates a large conversation. No rotation/summarization yet; delete its `.sessions/<role>.txt` to reset.
 - **Synchronous / single-threaded** — one bridge process handles one mention at a time. Fine for the current one-human, one-bot-at-a-time usage; would need a queue or async handling to scale.
 - **Headless permission behavior untested** — `claude -p` may hit a tool-use permission prompt it can't answer non-interactively for anything beyond what `.claude/settings.json` already allows. Needs a real test against a task that actually exercises tools (e.g. GitHub MCP), not just a text-only question.
 - **Five roles not wired yet** — only `Product_Owner` has a Socket Mode app configured. Repeating the Slack-app-config steps and running another `bridge.py` instance per role is mechanical but not done.
