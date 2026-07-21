@@ -33,3 +33,7 @@ dist/
 tmp/
 temp/
 .cache/
+
+# Slack bridge - persistent per-role Claude Code session ids (local state,
+# not portable/meaningful on another machine)
+scripts/slack-bridge/.sessions/
