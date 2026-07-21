@@ -38,11 +38,30 @@ Default to one Story per phase/milestone the spec already defines. Split further
 
 Use the Epic and Story templates in the contract that applies to the board you're writing to (v1.0 for Project 1, `github-project-2-contract.md` for Project 2) verbatim. Fill in Issue Type, Priority, Size, Estimate, and dates from the spec where it says, or Medium/blank where it doesn't. Don't invent new fields or skip required ones.
 
-### 5. Create the issues and link the hierarchy
+### 5. Add an integration checklist to every Epic
+
+Every Epic body must include an "Integration checklist" section, for Validator to run through and check off line by line before sign-off - separate from and in addition to each Story's own acceptance criteria. Use this template verbatim, tailoring items 1 and 5 to the Epic's actual Stories and sibling features:
+
+1. **Story AC traceability** - every Story's AC in the Epic mapped to a pass/fail line (not just "looks fine").
+2. **Entry-point wiring** - new toggle/button/route follows the existing pattern it's modeled on (same tab/role conventions, same panel-swap discipline).
+3. **Clean state transitions** - switching into and out of the new view leaves no leftover visible state in sibling views.
+4. **Data contract** - new view loads data the same way an existing sibling view does (same fetch/load pattern), not a bespoke one.
+5. **Adjacent-feature regression** - explicitly re-check the sibling feature(s) this shares chrome/state with.
+6. **Persistence round-trip** - edit -> save -> reload reflects the change; failure path surfaces a visible error, not silent/throw.
+7. **Destructive-edge guard** - any rename/id-swap/delete-like operation rejects blank/duplicate/invalid input without desyncing state.
+8. **Automated smoke/tests** - repo's own smoke scripts (if any) run and green; if none exist for this feature, flag that as a gap.
+9. **Copy/UI text accuracy** - hint/help text matches actual current capability.
+10. **Definition of Done sign-off** - each unchecked DoD box from the Stories explicitly addressed, not left implicit.
+
+Source: generalized by Validator from the Museums Epic (#11) integration pass, adopted as standing practice per Dr Michael, 2026-07-21.
+
+Also keep each Story's "Out of scope" section accurate as later Stories in the same Epic close the gap it describes - a stale out-of-scope claim that's since been implemented is itself a bug (this is exactly how Epic #11's #18 defect happened).
+
+### 6. Create the issues and link the hierarchy
 
 Create the Epic first, then each Story, then link every Story as a sub-issue of the Epic. Add every issue to the correct project board. Use GitHub API/CLI/MCP access if available (see `../../../docs/agents/setup.md` for this repo's GitHub MCP setup) - it's faster and less error-prone than the UI. If only browser automation is available, double back to visually confirm each issue landed correctly (right board, right Issue Type, correctly linked).
 
-### 6. Report back as a backlog, not a wall of text
+### 7. Report back as a backlog, not a wall of text
 
 Tell the user what got created as a short structured summary: the Epic, and each Story with its one-line purpose, linked. Flag anything you weren't confident about rather than silently picking an answer.
 
