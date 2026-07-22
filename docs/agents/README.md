@@ -1,6 +1,6 @@
 # IncusLuminis Agent Team
 
-**Status:** Connected and running — GitHub MCP live, Project 2 fields configured, all four Agent roles verified running concurrently on real (read-only) work. Formal pilot (`Product_Owner` → `Coder` → `Validator` on a Project 1 Story) not started yet.
+**Status:** Pilot complete — `Product_Owner` → `Coder` → `Validator` shipped a real feature on a Project 1 Story. Slack bridge live for four roles (`Product_Owner`, `Coder`, `Validator`, `DevOps`), who have genuinely interacted with each other over Slack; currently paused on a real bug `Validator` found that `Coder` can't fix live over Slack, blocked by a ~300s response-wait limit (see `implementation-roadmap.md §0`, 2026-07-22). Next up: fix that blocker, then wire `Publisher` to actually publish via Claude in Chrome browser automation.
 **Owner:** Product_Owner role (until a human owner is assigned)
 **Version:** 0.5 — 2026-07-21
 **Branch:** `feature/agent-team-design`, reviewed and merged into `main` by Mihal
