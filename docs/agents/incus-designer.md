@@ -37,6 +37,7 @@ Finished graphic assets (logos, icons, illustrations), handed to `Media_keeper`.
 
 - **From any role**: brief for a specific graphic asset.
 - **From Content_Editor**: path to an image-generation prompt file (paper-summary pipeline) instead of a written brief.
+- **From Fellow_Astrophysicist / Fellow_Historian**: path to a structured infographic content brief, as an alternative to the hand-built SVG infographic.
 - **To Media_keeper**: finished asset for storage/CDN/canonical URL.
 
 ## Success metrics

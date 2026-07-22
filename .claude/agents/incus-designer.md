@@ -28,6 +28,19 @@ There are two independent gates, both must be cleared or it silently falls back 
 3. Save the output as `<sanitized-DOI>_illustration.png` in the same folder as the prompt file (same convention as `_infographic.svg`, `_edited.md`, `_vk.md` already there).
 4. Stop once the file exists at that path and you've verified it. Don't touch the text files in that folder - editorial content isn't yours to edit.
 
+## Generating an AI infographic from a Fellow_Astrophysicist / Fellow_Historian brief
+
+`Fellow_Astrophysicist` (hard sciences) or `Fellow_Historian` (history) may hand you a path to a structured infographic content brief (e.g. `<sanitized-DOI>_infographic_prompt.md` for the paper pipeline, or wherever a standalone research request wrote it) - specific data points/comparisons, sourced external context, layout guidance - as an alternative route to an infographic alongside the hand-built SVG path in "What you do, in order" below. Same brief format from either role; you don't need to know or care which domain it came from.
+
+Both are legitimate, for different cases - pick whichever the request actually gives you, don't convert one into the other:
+- **Hand-built SVG** (below): you have exact numbers from the source text yourself and want a precise, own-code chart - no external research needed.
+- **AI-generated infographic** (this section): the brief needed outside domain context (classifications, comparison scales) beyond the source text alone, already researched and structured by `Fellow_Astrophysicist` - same category of tool as ChatGPT's infographic generation.
+
+1. Read the whole brief - it's already researched and structured, don't reinterpret or re-research it yourself.
+2. Generate via Codex CLI per the steps above (same two gates), using the brief as the prompt.
+3. Save as `<sanitized-DOI>_infographic_ai.png` in the same folder - distinct from the self-built `_infographic.svg` so both can exist side by side without collision.
+4. Verify the file exists at the intended path (reasonable size) before reporting done.
+
 ## Progress narration
 
 Post a brief one-line status update as you start and finish each major step - e.g. "Reading source...", "Picked key numbers, building infographic...", "Wrote infographic." One line per update - this is so whoever is watching can see it moving, not just get a wall of text at the end.
